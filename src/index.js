@@ -1,4 +1,4 @@
-import  express from "express";
+import  express, { request } from "express";
 
 
 const app = express();
@@ -10,26 +10,49 @@ app.use(express.json());
 //array geral!!!
 let usuarios = [];
 
+//esse e nosso midlaware que valida se tem id no array usuario para criar um recado
+function validaPeloId(request,response,next){
+    const usuarioId = request.params.id;
+    const usuarioValidado = usuarios.findIndex(usuario=> usuario.id === Number(usuarioId));
+    if(usuarioValidado != -1){
+        next()
+    }else{
+        return response.status(404).send("Nao encontrado")
+    }
+}
+
 //esse e o post mulaaaa!!!!!!!!!!!!!!!!!!!!//
 //ele vai criar nosso usuario
 
 app.post('/usuarios', (request,response)=>{
-    let { nome,email,senha,recado}= request.body;
+    let { nome,email,senha}= request.body;
     let validasetemusuariocadastrado = usuarios.find(user => user.nome === nome)
     if(validasetemusuariocadastrado){
         console.log("ja possui login")
         response.status(409).send("usuario ja existente")
     }else{
         let id = Math.floor(Math.random()*6767);
-        recado = [{
-            id: Math.floor(Math.random()*1425),
-            titulo: request.body.recado.titulo,
-            descricao: request.body.recado.descricao,
-        }]
-        let novoUsuario = {id, nome, email, senha,recado};
+        let novoUsuario = {id, nome, email, senha,recado:[]};
         usuarios.push(novoUsuario);
         response.status(201).send("criado com sucesso");
     }
+})
+
+//criamos os recados no array de usuarios
+
+app.post("/usuarios/:id/recado",validaPeloId, (request,response)=>{
+    const novoRecado = request.body;
+    let recadoCriado = {
+        id: Math.floor(Math.random()*1425),
+        titulo: novoRecado.titulo,
+        descricao: novoRecado.descricao
+    };
+    const id = request.params.id;
+    let pegueiIdParaRecado = usuarios.findIndex(usuario=> usuario.id === Number(id));
+    console.log(pegueiIdParaRecado);
+    usuarios[pegueiIdParaRecado].recado.push(recadoCriado);
+
+   return response.status(201).send("Recado criado com sucesso")
 })
 
 //vamos ler quem ta dentro do array 
@@ -41,24 +64,18 @@ app.get('/usuarios', (request,response)=>{
 
 //vamos alterar o recado do usuario //
 // usando o put //
-app.put('/usuarios/:id/recado/:recadoId', (req, res) => {
-    const userId = req.params.id; // obtém o ID do usuário a partir da URL
+app.put('/usuarios/:id/recado/:recadoId',validaPeloId, (req, res) => {
+    const usuarioId = req.params.id; // obtém o ID do usuário a partir da URL
     const recadoId = req.params.recadoId; // obtém o ID do recado a partir da URL
   
     // Encontra o usuário pelo ID
-    const usuario = usuarios.find(user => user.id === Number(userId));
-  
-    if (!usuario) {
-      res.status(404).send('Usuário não encontrado');
-      return;
-    }
-  
+    const usuario = usuarios.find(user => user.id === Number(usuarioId));
+
     // Encontra o recado pelo ID
     const recado = usuario.recado.find(recado => recado.id === Number(recadoId));
   
     if (!recado) {
-      res.status(404).send('Recado não encontrado');
-      return;
+      return res.status(404).send('Recado não encontrado');
     }
   
     // Atualiza o recado
@@ -68,14 +85,34 @@ app.put('/usuarios/:id/recado/:recadoId', (req, res) => {
     res.status(200).send('Recado atualizado com sucesso');
   });
 
-  //falta o delete // 
+  // delete // 
 
-  app.delete('/usuarios/:id/recado/:recadoId', (request, response)=>{
-    const id = request.params.id;
-    const indexUsuario = usuarios.findIndex(usuario=> usuario.id === Number(id));
-    usuarios.splice(indexUsuario, 1);
-    response.status(202).send("Usuario excluido com sucesso.");
-})
+  app.delete('/usuarios/:id/recado/:idRecado', (request, response)=>{
+    const id = Number(request.params.id);
+    const idRecado = Number(request.params.idRecado);
+    const indexDoUsuario = usuarios.findIndex(usuario => usuario.id === id);
+    //verifica se tem o id no array usuarios
+        if (indexDoUsuario < 0) {
+        response.status(404).send("Usuário não encontrado.");
+        return;
+        }
+
+    //pega o index do array usuarios
+    const indexDoRecado = usuarios[indexDoUsuario].recado.findIndex(recado => recado.id === idRecado);
+
+    // verifica se tem o id no array recado
+        if (indexDoRecado < 0) {
+        response.status(404).send("Recado não encontrado.");
+        return;
+        }
+    
+    //pega o id do array recado no array usuarios e exclui    
+    usuarios[indexDoUsuario].recado.splice(indexDoRecado, 1);
+    
+    response.status(202).send("Recado excluído com sucesso.");
+  })
+  
+
 
 app.listen(1425, ()=>{
     console.log("servidor rodando")
