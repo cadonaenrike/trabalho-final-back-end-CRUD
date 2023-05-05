@@ -32,6 +32,14 @@ app.post('/usuarios', (request,response)=>{
     }
 })
 
+//vamos ler quem ta dentro do array 
+// usando o get //
+
+app.get('/usuarios', (request,response)=>{
+    response.status(202).json(usuarios);
+})
+
+
 app.listen(1426, ()=>{
     console.log("servidor rodando")
 });
