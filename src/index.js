@@ -68,6 +68,15 @@ app.put('/usuarios/:id/recado/:recadoId', (req, res) => {
     res.status(200).send('Recado atualizado com sucesso');
   });
 
-app.listen(1426, ()=>{
+  //falta o delete // 
+
+  app.delete('/usuarios/:id/recado/:recadoId', (request, response)=>{
+    const id = request.params.id;
+    const indexUsuario = usuarios.findIndex(usuario=> usuario.id === Number(id));
+    usuarios.splice(indexUsuario, 1);
+    response.status(202).send("Usuario excluido com sucesso.");
+})
+
+app.listen(1425, ()=>{
     console.log("servidor rodando")
 });
