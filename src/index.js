@@ -39,6 +39,34 @@ app.get('/usuarios', (request,response)=>{
     response.status(202).json(usuarios);
 })
 
+//vamos alterar o recado do usuario //
+// usando o put //
+app.put('/usuarios/:id/recado/:recadoId', (req, res) => {
+    const userId = req.params.id; // obtém o ID do usuário a partir da URL
+    const recadoId = req.params.recadoId; // obtém o ID do recado a partir da URL
+  
+    // Encontra o usuário pelo ID
+    const usuario = usuarios.find(user => user.id === Number(userId));
+  
+    if (!usuario) {
+      res.status(404).send('Usuário não encontrado');
+      return;
+    }
+  
+    // Encontra o recado pelo ID
+    const recado = usuario.recado.find(recado => recado.id === Number(recadoId));
+  
+    if (!recado) {
+      res.status(404).send('Recado não encontrado');
+      return;
+    }
+  
+    // Atualiza o recado
+    recado.titulo = req.body.titulo;
+    recado.descricao = req.body.descricao;
+  
+    res.status(200).send('Recado atualizado com sucesso');
+  });
 
 app.listen(1426, ()=>{
     console.log("servidor rodando")
