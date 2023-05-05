@@ -21,8 +21,8 @@ function validaPeloId(request,response,next){
     }
 }
 
-//esse e o post mulaaaa!!!!!!!!!!!!!!!!!!!!//
 //ele vai criar nosso usuario
+// utilizando metodo post
 
 app.post('/usuarios', (request,response)=>{
     let { nome,email,senha}= request.body;
@@ -48,8 +48,10 @@ app.post("/usuarios/:id/recado",validaPeloId, (request,response)=>{
         descricao: novoRecado.descricao
     };
     const id = request.params.id;
+
     let pegueiIdParaRecado = usuarios.findIndex(usuario=> usuario.id === Number(id));
     console.log(pegueiIdParaRecado);
+
     usuarios[pegueiIdParaRecado].recado.push(recadoCriado);
 
    return response.status(201).send("Recado criado com sucesso")
@@ -84,8 +86,8 @@ app.put('/usuarios/:id/recado/:recadoId',validaPeloId, (req, res) => {
   
     res.status(200).send('Recado atualizado com sucesso');
   });
-
-  // delete // 
+   // excluindo o recado por ID 
+  // utilizando o delete 
 
   app.delete('/usuarios/:id/recado/:idRecado', (request, response)=>{
     const id = Number(request.params.id);
