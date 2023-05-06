@@ -11,6 +11,7 @@ app.use(express.json());
 
 //array geral!!!
 let usuarios = [];
+let logado = false
 
 //esse e nosso midlaware que valida se tem id no array usuario para criar um recado
 function validaPeloId(request,response,next){
@@ -21,9 +22,18 @@ function validaPeloId(request,response,next){
     }else{
         return response.status(404).send("Nao encontrado")
     }
+};
+
+function validaLogin(request, response, next) {
+
+  if (usuarios.length > 0 && usuarios[0].logado === true) {
+    // Se estiver logado, chama o próximo middleware ou rota
+    next();
+  } else {
+    // Se não estiver logado, envia uma resposta com status 401 (Não Autorizado)
+    response.status(401).send("Não Logado");
+  }
 }
-
-
 
 //ele vai criar nosso usuario
 // utilizando metodo post
@@ -38,7 +48,7 @@ app.post('/usuarios',async (request,response)=>{
         let id = Math.floor(Math.random()*6767);
         let senhaCriptografada = await bcrypt.hash(senha, 10);
         console.log(senhaCriptografada)
-        let novoUsuario = {id, nome, email, senhaCriptografada};
+        let novoUsuario = {id, nome, email, senhaCriptografada,logado,recado:[]};
         usuarios.push(novoUsuario);
         response.status(201).send("criado com sucesso");
     }
@@ -46,29 +56,40 @@ app.post('/usuarios',async (request,response)=>{
 
 // criando login por post
 app.post('/usuarios/login', async (request, response) => {
-  let { nome, senha } = request.body;
-  let usuario = usuarios.find(user => user.nome === nome);
+  let { email, senha } = request.body;
+  let emailVerificado = usuarios.find(user => user.email === email);
   
-  if (!usuario) {
-    return response.status(401).send('Usuário ou senha inválidos');
+  if (!emailVerificado) {
+    return response.status(401).send('Email ou senha inválidos');
   }
   
-  let senhaComparada = await bcrypt.compare(senha, usuario.senhaCriptografada);
+  let senhaComparada = await bcrypt.compare(senha, emailVerificado.senhaCriptografada);
   
   if (!senhaComparada) {
-    return response.status(401).send('Usuário ou senha inválidos');
-  } 
-  
-  let arrayRecado = { recado: [] };
-  usuarios.push(arrayRecado);
+    return response.status(401).send('Email ou senha inválidos');
+  }else{ 
+    function encontrarIndiceDoObjeto(arayPai, logado, valor) {
+      for (let i = 0; i < usuarios.length; i++) {
+        if (arayPai[i][logado] === valor) {
+          return i; // Retorna o índice quando encontrar o objeto com a propriedade e valor desejados
+        }else{
+          return -1;
+        }
+      }
+    }
+    const indice = encontrarIndiceDoObjeto(usuarios, "logado", false);
+    if (indice !== -1){
+      usuarios[indice].logado = true;
+    }
+    response.status(202).send('Logado com sucesso')
     
-  response.status(202).send('Logado com sucesso'); 
+   }
 });
 
 
 //criamos os recados no array de usuarios
 
-app.post("/usuarios/:id/recado",validaPeloId, (request,response)=>{
+app.post("/usuarios/:id/recado",validaPeloId,validaLogin, (request,response)=>{
     const novoRecado = request.body;
     let recadoCriado = {
         id: Math.floor(Math.random()*1425),
@@ -88,13 +109,13 @@ app.post("/usuarios/:id/recado",validaPeloId, (request,response)=>{
 //vamos ler quem ta dentro do array 
 // usando o get //
 
-app.get('/usuarios',validaEmailSenha, (request,response)=>{
+app.get('/usuarios',validaLogin, (request,response)=>{
     response.status(202).json(usuarios);
 })
 
 //vamos alterar o recado do usuario //
 // usando o put //
-app.put('/usuarios/:id/recado/:recadoId',(req, res) => {
+app.put('/usuarios/:id/recado/:recadoId',validaLogin, (req, res) => {
     const usuarioId = req.params.id; // obtém o ID do usuário a partir da URL
     const recadoId = req.params.recadoId; // obtém o ID do recado a partir da URL
   
@@ -119,7 +140,7 @@ app.put('/usuarios/:id/recado/:recadoId',(req, res) => {
    // excluindo o recado por ID 
   // utilizando o delete 
 
-  app.delete('/usuarios/:id/recado/:idRecado', (request, response)=>{
+  app.delete('/usuarios/:id/recado/:idRecado',validaLogin,  (request, response)=>{
     const id = Number(request.params.id);
     const idRecado = Number(request.params.idRecado);
     const indexDoUsuario = usuarios.findIndex(usuario => usuario.id === id);
