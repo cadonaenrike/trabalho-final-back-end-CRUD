@@ -44,6 +44,26 @@ app.post('/usuarios',async (request,response)=>{
     }
 })
 
+// criando login por post
+app.post('/usuarios/login', async (request, response) => {
+  let { nome, senha } = request.body;
+  let usuario = usuarios.find(user => user.nome === nome);
+  
+  if (!usuario) {
+    return response.status(401).send('Usuário ou senha inválidos');
+  }
+  
+  let senhaComparada = await bcrypt.compare(senha, usuario.senhaCriptografada);
+  
+  if (!senhaComparada) {
+    return response.status(401).send('Usuário ou senha inválidos');
+  } 
+  
+  let arrayRecado = { recado: [] };
+  usuarios.push(arrayRecado);
+    
+  response.status(202).send('Logado com sucesso'); 
+});
 
 
 //criamos os recados no array de usuarios
