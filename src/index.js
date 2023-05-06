@@ -3,6 +3,8 @@ import  express, { request } from "express";
 
 const app = express();
 
+const bcrypt = require('bcrypt');
+
 app.use(express.json());
 
 
@@ -21,22 +23,28 @@ function validaPeloId(request,response,next){
     }
 }
 
+
+
 //ele vai criar nosso usuario
 // utilizando metodo post
 
-app.post('/usuarios', (request,response)=>{
+app.post('/usuarios',async (request,response)=>{
     let { nome,email,senha}= request.body;
-    let validasetemusuariocadastrado = usuarios.find(user => user.nome === nome)
+    let validasetemusuariocadastrado = usuarios.find(user => user.email === email)
     if(validasetemusuariocadastrado){
         console.log("ja possui login")
         response.status(409).send("usuario ja existente")
     }else{
         let id = Math.floor(Math.random()*6767);
-        let novoUsuario = {id, nome, email, senha,recado:[]};
+        let senhaCriptografada = await bcrypt.hash(senha, 10);
+        console.log(senhaCriptografada)
+        let novoUsuario = {id, nome, email, senhaCriptografada};
         usuarios.push(novoUsuario);
         response.status(201).send("criado com sucesso");
     }
 })
+
+
 
 //criamos os recados no array de usuarios
 
@@ -60,13 +68,13 @@ app.post("/usuarios/:id/recado",validaPeloId, (request,response)=>{
 //vamos ler quem ta dentro do array 
 // usando o get //
 
-app.get('/usuarios', (request,response)=>{
+app.get('/usuarios',validaEmailSenha, (request,response)=>{
     response.status(202).json(usuarios);
 })
 
 //vamos alterar o recado do usuario //
 // usando o put //
-app.put('/usuarios/:id/recado/:recadoId',validaPeloId, (req, res) => {
+app.put('/usuarios/:id/recado/:recadoId',(req, res) => {
     const usuarioId = req.params.id; // obtém o ID do usuário a partir da URL
     const recadoId = req.params.recadoId; // obtém o ID do recado a partir da URL
   
@@ -86,6 +94,8 @@ app.put('/usuarios/:id/recado/:recadoId',validaPeloId, (req, res) => {
   
     res.status(200).send('Recado atualizado com sucesso');
   });
+
+  
    // excluindo o recado por ID 
   // utilizando o delete 
 
