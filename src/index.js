@@ -8,15 +8,17 @@ let usuarios = [];
 let logado = false;
 
 //esse e nosso midlaware que valida se tem id no array usuario para criar um recado //
-  function validaPeloId(request,response,next){
-      const usuarioId = request.params.id;
-      const usuarioValidado = usuarios.findIndex(usuario=> usuario.id === Number(usuarioId));
-      if(usuarioValidado != -1){
-          next()
-      }else{
-          return response.status(404).send("Nao encontrado")
-      }
-  };
+function validaPeloId(request, response, next) {
+  const usuarioId = request.params.id;
+  const usuarioValidado = usuarios.find(usuario => usuario.id === Number(usuarioId));
+
+  if (usuarioValidado) {
+    next(); // Se o usuário for encontrado, chama o próximo middleware ou rota
+  } else {
+    response.status(404).send("Usuário não encontrado");
+  }
+}
+
 
 //midlaware que verifica se esta logado no sistema //
   function validaLogin(request, response, next) {
@@ -61,14 +63,13 @@ let logado = false;
     if (!senhaComparada) {
       return response.status(401).send('Email ou senha inválidos');
     }else{ 
-      function encontrarIndiceDoObjeto(arayPai, logado, valor) {
-        for (let i = 0; i < usuarios.length; i++) {
-          if (arayPai[i][logado] === valor) {
+      function encontrarIndiceDoObjeto(arrayPai, propriedade, valor) {
+        for (let i = 0; i < arrayPai.length; i++) {
+          if (arrayPai[i][propriedade] === valor) {
             return i; // Retorna o índice quando encontrar o objeto com a propriedade e valor desejados
-          }else{
-            return -1;
           }
         }
+        return -1; // Retorna -1 se o objeto não for encontrado no array
       }
       const indice = encontrarIndiceDoObjeto(usuarios, "logado", false);
       if (indice !== -1){
@@ -111,10 +112,15 @@ let logado = false;
       const usuario = usuarios.find(user => user.id === Number(usuarioId));
 
       // Encontra o recado pelo ID
+      
       const recado = usuario.recado.find(recado => recado.id === Number(recadoId));
     
-      if (!recado) {
+      if (!recado ) {
         return res.status(404).send('Recado não encontrado');
+      }
+    
+      if (usuario === undefined && recado === recado) {
+        return res.status(404).send('Usuario não encontrado');
       }
     
       // Atualiza o recado
