@@ -24,12 +24,10 @@ function validaPeloId(request, response, next) {
       let { nome,email,senha}= request.body;
       let validasetemusuariocadastrado = usuarios.find(user => user.email === email)
       if(validasetemusuariocadastrado){
-          console.log("ja possui login")
           response.status(409).send("usuario ja existente")
       }else{
           let id = Math.floor(Math.random()*6767);
           let senhaCriptografada = await bcrypt.hash(senha, 10);
-          console.log(senhaCriptografada)
           let novoUsuario = {id, nome, email, senhaCriptografada, recado:[]};
           usuarios.push(novoUsuario);
           response.status(201).send("criado com sucesso");
@@ -70,7 +68,6 @@ function validaPeloId(request, response, next) {
       const id = request.params.id;
 
       let pegueiIdParaRecado = usuarios.findIndex(usuario=> usuario.id === Number(id));
-      console.log(pegueiIdParaRecado);
 
       usuarios[pegueiIdParaRecado].recado.push(recadoCriado);
 
