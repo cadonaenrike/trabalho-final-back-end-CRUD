@@ -5,7 +5,7 @@ app.use(express.json());
 
 //array geral!!! //
 let usuarios = [];
-let logado = false;
+
 
 //esse e nosso midlaware que valida se tem id no array usuario para criar um recado //
 function validaPeloId(request, response, next) {
@@ -19,19 +19,6 @@ function validaPeloId(request, response, next) {
   }
 }
 
-
-//midlaware que verifica se esta logado no sistema //
-  function validaLogin(request, response, next) {
-
-    if (usuarios.length > 0 && usuarios[0].logado === true) {
-      // Se estiver logado, chama o próximo middleware ou rota
-      next();
-    } else {
-      // Se não estiver logado, envia uma resposta com status 401 (Não Autorizado)
-      response.status(401).send("Não Logado");
-    }
-  };
-
 //ele vai criar nosso usuario// utilizando metodo post //
   app.post('/usuarios',async (request,response)=>{
       let { nome,email,senha}= request.body;
@@ -43,7 +30,7 @@ function validaPeloId(request, response, next) {
           let id = Math.floor(Math.random()*6767);
           let senhaCriptografada = await bcrypt.hash(senha, 10);
           console.log(senhaCriptografada)
-          let novoUsuario = {id, nome, email, senhaCriptografada,logado,recado:[]};
+          let novoUsuario = {id, nome, email, senhaCriptografada, recado:[]};
           usuarios.push(novoUsuario);
           response.status(201).send("criado com sucesso");
       }
@@ -63,30 +50,17 @@ function validaPeloId(request, response, next) {
     if (!senhaComparada) {
       return response.status(401).send('Email ou senha inválidos');
     }else{ 
-      function encontrarIndiceDoObjeto(arrayPai, propriedade, valor) {
-        for (let i = 0; i < arrayPai.length; i++) {
-          if (arrayPai[i][propriedade] === valor) {
-            return i; // Retorna o índice quando encontrar o objeto com a propriedade e valor desejados
-          }
-        }
-        return -1; // Retorna -1 se o objeto não for encontrado no array
-      }
-      const indice = encontrarIndiceDoObjeto(usuarios, "logado", false);
-      if (indice !== -1){
-        usuarios[indice].logado = true;
-      }
       response.status(202).send('Logado com sucesso')
-      
     }
   });
 
 //vamos ler quem ta dentro do array // utilizando metodo get //
-  app.get('/usuarios',validaLogin, (request,response)=>{
+  app.get('/usuarios', (request,response)=>{
     response.status(202).json(usuarios);
   })
 
 //criamos os recados no array de usuarios// utilizando metodo post //
-  app.post("/usuarios/:id/recado",validaPeloId,validaLogin, (request,response)=>{
+  app.post("/usuarios/:id/recado",validaPeloId, (request,response)=>{
       const novoRecado = request.body;
       let recadoCriado = {
           id: Math.floor(Math.random()*1425),
@@ -104,7 +78,7 @@ function validaPeloId(request, response, next) {
   });
 
 //vamos alterar o recado do usuario // utilizando metodo o put //
-  app.put('/usuarios/:id/recado/:recadoId',validaLogin, (req, res) => {
+  app.put('/usuarios/:id/recado/:recadoId',validaPeloId,(req, res) => {
       const usuarioId = req.params.id; // obtém o ID do usuário a partir da URL
       const recadoId = req.params.recadoId; // obtém o ID do recado a partir da URL
     
@@ -115,6 +89,7 @@ function validaPeloId(request, response, next) {
       
       const recado = usuario.recado.find(recado => recado.id === Number(recadoId));
     
+      
       if (!recado ) {
         return res.status(404).send('Recado não encontrado');
       }
@@ -131,7 +106,7 @@ function validaPeloId(request, response, next) {
     });
 
 // excluindo o recado por ID // utilizando metodo delete //
-  app.delete('/usuarios/:id/recado/:idRecado',validaLogin,  (request, response)=>{
+  app.delete('/usuarios/:id/recado/:idRecado', (request, response)=>{
     const id = Number(request.params.id);
     const idRecado = Number(request.params.idRecado);
     const indexDoUsuario = usuarios.findIndex(usuario => usuario.id === id);
